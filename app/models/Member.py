@@ -17,6 +17,7 @@ class Member(SQLModel, table=True):
   password: str = Field()
   ref_member: int|None = Field(foreign_key="members.id")
   ref_sales: int|None = Field(foreign_key="sales.id")
+  id_level: int = Field(default=1)
 
   created_at: datetime = Field(default_factory=datetime.utcnow)
   updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": func.now()})

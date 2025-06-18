@@ -1,8 +1,21 @@
 from pydantic import BaseModel
+from typing import List
+
+from app.schemas.SatuanSchema import SatuanPublic
+
+class HargaSatuan(SatuanPublic):
+  harga: float
 
 class ItemPublic(BaseModel):
-  kodeitem: str
-  namaitem: str
+  id: str
+  nama: str
+  url_gambar: str
+  deskripsi: str
   jenis: str
-  hargajual1: float
-  stok: float
+  satuan: List[HargaSatuan]
+  stok: int
+
+class ItemKeranjang(BaseModel):
+  id: str
+  nama: str
+  url_gambar: str
