@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
   from app.models.Keranjang import Keranjang
+  from .DetailTransaksi import DetailTransaksi
 
 class Satuan(SQLModel, table=True):
   __tablename__ = "satuan"
@@ -16,3 +17,4 @@ class Satuan(SQLModel, table=True):
 
   # relationship
   keranjang: List["Keranjang"] = Relationship(back_populates="satuan")
+  detail_transaksi: List["DetailTransaksi"] = Relationship(back_populates="satuan")

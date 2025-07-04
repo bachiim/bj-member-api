@@ -1,5 +1,9 @@
-from sqlmodel import SQLModel, Field, func
-from datetime import datetime 
+from sqlmodel import SQLModel, Field, func, Relationship
+from datetime import datetime
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+  from app.models.Member import Member
 
 class Level(SQLModel, table=True):
   __tablename__ = "levels"
@@ -10,3 +14,6 @@ class Level(SQLModel, table=True):
 
   created_at: datetime = Field(default_factory=datetime.utcnow)
   updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": func.now()})
+
+  # relationship
+  members: List["Member"] = Relationship(back_populates="level")

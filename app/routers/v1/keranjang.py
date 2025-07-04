@@ -165,3 +165,21 @@ def update(id: int, keranjang: KeranjangUpdate, current_member: MemberDep, app_s
   except Exception as e:
     app_session.rollback()
     raise HTTPException(500, detail=str(e))
+  
+# delete
+@router.delete("/{id}", response_model=SuccessResponse, responses=ErrorResponse)
+def delete(id: int, current_member: MemberDep, app_session: AppSessionDep):
+  try:
+    db_keranjang = app_session.exec(select(Keranjang).where(Keranjang.id == id)).first()
+    if not db_keranjang:
+      raise HTTPException(404, "Keranjang tidak ditemukan")
+    
+    app_session.delete(db_keranjang)
+    app_session.commit()
+
+  except HTTPException:
+    app_session.rollback()
+    raise
+  except Exception as e:
+    app_session.rollback()
+    raise HTTPException(500, detail=str(e))
