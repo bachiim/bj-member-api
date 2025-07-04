@@ -4,6 +4,7 @@ from typing import Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
   from app.models.Sales import Sales
+  from app.models.Level import Level
 
 class Member(SQLModel, table=True):
   __tablename__ = "members"
@@ -17,7 +18,7 @@ class Member(SQLModel, table=True):
   password: str = Field()
   ref_member: int|None = Field(foreign_key="members.id")
   ref_sales: int|None = Field(foreign_key="sales.id")
-  id_level: int = Field(default=1)
+  id_level: int = Field(default=1, foreign_key="levels.id")
 
   created_at: datetime = Field(default_factory=datetime.utcnow)
   updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": func.now()})
@@ -26,4 +27,5 @@ class Member(SQLModel, table=True):
   to_member: List["Member"] = Relationship(back_populates="from_member")
   # sales relationship
   sales: Optional["Sales"] = Relationship(back_populates="members")
+  level: "Level" = Relationship(back_populates="members")
   
