@@ -4,6 +4,8 @@ from sqlmodel import select
 from app.core.database import IposSessionDep, AppSessionDep
 from app.models.Item import Item
 from app.models.ItemApp import ItemApp
+from app.models.Satuan import Satuan
+from app.models.ItemHJ import ItemHJ
 from app.schemas.ItemSchema import *
 from app.schemas.SuccessResponseSchema import SuccessResponse
 from app.utils.hargajual_helper import get_list_hargasatuan_by_id
@@ -14,16 +16,25 @@ router = APIRouter(prefix="/items", tags=["items"])
 @router.get("/", response_model=SuccessResponse[List[ItemPublic]])
 def read(ipos_session: IposSessionDep, app_session: AppSessionDep):
   try:
-    # get items
     items = ipos_session.exec(select(Item)).all()
-    # get items app
     items_app = app_session.exec(select(ItemApp)).all()
-    items_app_map = {item.id: item for item in items_app}
+    satuan = app_session.exec(select(Satuan)).all()
+    items_hj = ipos_session.exec(select(ItemHJ).where(ItemHJ.level.in_(["0", "1"]))).all()
+    # mapping
+    items_map = {item.kodeitem: item for item in items}
+    satuan_map = {s.nama: s for s in satuan}
+
+    # grouping ItemHJ by kodeitem
+    items_hj_map = {}
+    for hj in items_hj:
+      items_hj_map.setdefault(hj.kodeitem, []).append(hj)
 
     data_item = []
-    for item in items:
-      list_harga = get_list_hargasatuan_by_id(item.kodeitem, app_session, ipos_session)
-      item_app = items_app_map.get(item.kodeitem)
+    for item_app in items_app:
+      item = items_map.get(item_app.id)
+      if not item: continue
+      itemhj_list = items_hj_map.get(item_app.id, [])
+      list_harga = get_list_hargasatuan_by_id(item, satuan_map, itemhj_list)
 
       data_item.append(ItemPublic(
         id=item_app.id,

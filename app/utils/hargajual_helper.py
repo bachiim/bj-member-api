@@ -1,5 +1,5 @@
 from sqlmodel import select
-from typing import List
+from typing import List, Dict
 
 from app.core.database import AppSessionDep, IposSessionDep
 
@@ -10,13 +10,8 @@ from app.models.Satuan import Satuan
 from app.schemas.ItemSchema import HargaSatuan
 
 
-def get_list_hargasatuan_by_id(id_item: str, app_session: AppSessionDep, ipos_session: IposSessionDep):
+def get_list_hargasatuan_by_id(item: Item, satuan_map: Dict[str, Satuan], itemhj_list: List[ItemHJ]):
   list_harga: List[HargaSatuan] = []
-  # get item
-  item = ipos_session.exec(select(Item).where(Item.kodeitem == id_item)).first()
-  # get satuan
-  satuan = app_session.exec(select(Satuan)).all()
-  satuan_map = {s.nama: s for s in satuan}
 
   if item.sistemhargajual == "O":
     item_satuan = satuan_map.get(item.satuan)
@@ -26,12 +21,7 @@ def get_list_hargasatuan_by_id(id_item: str, app_session: AppSessionDep, ipos_se
       harga=item.hargajual1
     ))
   else:
-    itemhj = ipos_session.exec(
-      select(ItemHJ).
-      where(ItemHJ.kodeitem == id_item,
-            ItemHJ.level.in_(["0", "1"]))
-      ).all()
-    for hj in itemhj:
+    for hj in itemhj_list:
       item_satuan = satuan_map.get(hj.satuan)
       list_harga.append(HargaSatuan(
         id=item_satuan.id,
