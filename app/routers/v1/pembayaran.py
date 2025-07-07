@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, Form
-from sqlmodel import select, func
+from sqlmodel import select
 from typing import Annotated
-from datetime import datetime
+from datetime import datetime, date
 import os
 
 from app.core.database import AppSessionDep, IposSessionDep
 from app.core.security import MemberDep
+from app.core.supabase import supabase
 
 from app.models.Pembayaran import Pembayaran, StatusPembayaran
 from app.models.Transaksi import Transaksi, StatusTransaksi
@@ -17,7 +18,7 @@ from app.schemas.SuccessResponseSchema import SuccessResponse
 
 router = APIRouter(prefix="/pembayaran", tags=["pembayaran"])
 
-FOLDER_PATH = "uploads/bukti_transfer"
+FOLDER_PATH = "bukti_transfer"
 ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png"]
 MAX_FILE_SIZE_MB = 2
 
@@ -44,9 +45,11 @@ def create(pembayaran: Annotated[PembayaranCreate, Form()], current_member: Memb
     new_filename = f"btf-{timestamp}-{transaksi.id}.{ext}"
 
     # save file
-    os.makedirs(FOLDER_PATH, exist_ok=True)
-    with open(os.path.join(FOLDER_PATH, new_filename), "wb") as f:
-      f.write(contents)
+    # os.makedirs(FOLDER_PATH, exist_ok=True)
+    # with open(os.path.join(FOLDER_PATH, new_filename), "wb") as f:
+    #   f.write(contents)
+    storage_path = f"{FOLDER_PATH}/{new_filename}"
+    supabase.storage.from_("uploads").upload(path=storage_path, file=contents)
     
     db_pembayaran = Pembayaran(
       id_transaksi = transaksi.id,
@@ -92,13 +95,21 @@ def konfirmasi(id: int, request: PembayaranKonfirmasi, current_member: MemberDep
     if request.konfirmasi:
       pembayaran.status = StatusPembayaran.BERHASIL
 
-      today = datetime.utcnow().date()
-      all_transaksi_today = app_session.exec(select(Transaksi).
-                                             where(func.date(Transaksi.tanggal) == today).
-                                             order_by(Transaksi.tanggal)).all()
+      now = datetime.utcnow()
+      start_date = date(now.year, now.month, 1)
+      end_date = date(now.year + int(now.month == 12), (now.month % 12) + 1, 1)
+
+      all_transaksi_bulan_ini = app_session.exec(
+          select(Transaksi)
+          .where(
+            Transaksi.tanggal >= start_date,
+            Transaksi.tanggal < end_date
+          )
+          .order_by(Transaksi.tanggal)
+      ).all()
       
       urutan_transaksi = 0
-      for urutan, transaksi in enumerate(all_transaksi_today, 1):
+      for urutan, transaksi in enumerate(all_transaksi_bulan_ini, 1):
         if transaksi.id == pembayaran.transaksi.id:
           urutan_transaksi = urutan
           break
