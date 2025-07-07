@@ -44,3 +44,10 @@ class ChangePasswordSchema(BaseModel):
     if self.password_baru != self.konfirmasi_password:
       raise PydanticCustomError("password_not_match", "Possword Baru dan Konfirmasi Password tidak cocok")
     return self
+  
+class EmailSchema(BaseModel):
+  email: EmailStr
+
+class OtpSchema(BaseModel):
+  email: EmailStr
+  kode_otp: str

@@ -21,6 +21,11 @@ class Settings(BaseSettings):
   # SUPABASE
   SUPABASE_URL: str
   SUPABASE_KEY: str
+  # MAIL
+  MAIL_USERNAME: str
+  MAIL_PASSWORD: str
+  MAIL_SERVER: str
+  MAIL_PORT: str
 
   @property
   def IPOS_DB_URL(self):
